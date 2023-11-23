@@ -126,7 +126,13 @@ class MdImageLocal:
         # if modify_source is True, out_folder_path will be set as md_path
         self.out_folder_path = os.path.abspath(md_path) if modify_source else \
             os.path.abspath(os.path.join(md_path, out_folder_name))
-        self.regex = r"(?:!\[.*?\])(?:\(|\[)(?P<url>(?:https?\:(?:\/\/)?)(?:\w|\-|\_|\.|\?|\/)+?\/(?P<end>(?:(?=_png\/|_jpg\/|_jpeg\/|_gif\/|_bmp\/|_svg\/)[^\/]+?[^()]+)|(?:[^\/()]+(?:\.png|\.jpg|\.jpeg|\.gif|\.bmp|\.svg)?)))(?:\)|\])"
+        
+        #self.regex = r"(?:!\[.*?\])(?:\(|\[)(?P<url>(?:https?\:(?:\/\/)?)(?:\w|\-|\_|\.|\?|\/)+?\/(?P<end>(?:(?=_png\/|_jpg\/|_jpeg\/|_gif\/|_bmp\/|_svg\/)[^\/]+?[^()]+)|(?:[^\/()]+(?:\.png|\.jpg|\.jpeg|\.gif|\.bmp|\.svg)?)))(?:\)|\])"
+        #Previous line is origin regex definition.Below, I made a small improvement.
+        #add---> (?:\?.*)? <---to this regex in order to match url contains parameters 
+        #because sometimes we get a md file from networks and it's not well-formed but made by some tools.
+        self.regex = r"(?:!\[.*?\])(?:\(|\[)(?P<url>(?:https?\:(?:\/\/)?)(?:\w|\-|\_|\.|\?|\/)+?\/(?P<end>(?:(?=_png\/|_jpg\/|_jpeg\/|_gif\/|_bmp\/|_svg\/)[^\/]+?[^()]+)|(?:[^\/()]+(?:\.png|\.jpg|\.jpeg|\.gif|\.bmp|\.svg)?(?:\?.*)?)))(?:\)|\])"
+        
         # Create new folder to receive the downloaded imgs and edited MD files
         if not modify_source:
             create_folder(self.out_folder_path)  # create new output folder
