@@ -41,8 +41,9 @@ async def download(url_dict, out_folder_path):
     Download images in url_dict, use async to speed up.
     """
     semaphore = asyncio.Semaphore(8)  # limit max coroutine numbers to 8
+    timeout = aiohttp.ClientTimeout(total=20)  # 设置总超时时间为20秒
     # Create session which contains a connection pool
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         # Create all tasks
         await asyncio.gather(*[image_download(session, img_url, os.path.join(out_folder_path, img_path), semaphore)
                                for img_url, img_path in url_dict.items()])
@@ -158,15 +159,17 @@ class MdImageLocal:
             url_dict = create_url2local_dict(self.regex, file_data, filename)
             # skip if no online link in this file
             if url_dict:
-                # Create a folder with md filename which contains images
-                create_folder(os.path.join(self.out_folder_path, filename[:-3] + ".assets"))
-                # Specify img folder
-                url_dict = {key: os.path.join(filename[:-3] + ".assets", value) for key, value in url_dict.items()}
-                # Edit the read content of each file, replacing the found imgs urls with local file names instead
+                # 创建包含图像的 md 文件的文件夹
+                images_folder = os.path.join(self.out_folder_path, "images")
+                create_folder(images_folder)
+                create_folder(os.path.join(images_folder, filename[:-3] + ".assets"))
+                # 指定图像文件夹
+                url_dict = {key: os.path.join("images", filename[:-3] + ".assets", value) for key, value in url_dict.items()}
+                # 编辑每个文件的内容，将找到的图像 URL 替换为本地文件名
                 edited_file_data = file_replace_url(file_data, url_dict, filename)
-                # Add url_dict to all_img_dict
+                # 将url_dict添加到all_img_dict
                 all_img_dict.update(url_dict)
-                # Write the modified markdown files
+                # 写入修改后的 md 文件
                 write_file(self.out_folder_path, filename, edited_file_data)
             else:
                 logging.info(f"No url! Skipped file: {filename}\n")
@@ -178,6 +181,10 @@ class MdImageLocal:
         loop.run_until_complete(download(all_img_dict, self.out_folder_path))
         print("\n\n\nfiles and the downloaded images on the folder:")
         print(f"{self.out_folder_path}")
+        # 休眠6秒
+        logging.info(f"完成对文件: {filename}的修改\n休眠6秒,防止连接频繁被卡！\n")
+        print(f"完成对文件: {filename}的修改\n休眠6秒,防止连接频繁被卡！\n")
+        time.sleep(6)
 
 
 def recursion(cur_path):
